@@ -1,7 +1,7 @@
 services:
   mqtt-broker:
     image: eclipse-mosquitto:2.0
-    container_name: mqtt-broker
+    container_name: broker
     ports:
       - "1883:1883"
     volumes:
@@ -12,23 +12,23 @@ services:
     build:
       context: ./services/publisher
     environment:
-      MQTT_HOST: mqtt-broker
+      MQTT_HOST: broker
       MQTT_PORT: "1883"
       MQTT_TOPIC: sandbox/events
       PUBLISH_INTERVAL_SECONDS: "5"
       MQTT_QOS: "1"
     depends_on:
-      - mqtt-broker
+      - broker
     restart: unless-stopped
 
   consumer:
     build:
       context: ./services/consumer
     environment:
-      MQTT_HOST: mqtt-broker
+      MQTT_HOST: broker
       MQTT_PORT: "1883"
       MQTT_TOPIC: sandbox/events
       MQTT_QOS: "1"
     depends_on:
-      - mqtt-broker
+      - broker
     restart: unless-stopped
