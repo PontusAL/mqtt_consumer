@@ -6,17 +6,17 @@ services:
       - "1883:1883"
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-    restart: unless-stopped
+    restart: unless-stopped #Restart the broker unless stopped manually
 
-  publisher:
+  broadcaster:
     build:
-      context: ./services/publisher
+      context: ./services/broadcaster
     environment:
-      MQTT_HOST: broker
-      MQTT_PORT: "1883"
-      MQTT_TOPIC: sandbox/events
-      PUBLISH_INTERVAL_SECONDS: "5"
-      MQTT_QOS: "1"
+      MQTT_HOST: ${MQTT_HOST:-broker}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      BROADCAST_TOPIC: ${BROADCAST_TOPIC:-sandbox/events}
+      BROADCAST_INTERVAL: ${BROADCAST_INTERVAL:-5}
+      MQTT_QOS: ${MQTT_QOS:-1}
     depends_on:
       - broker
     restart: unless-stopped
@@ -25,10 +25,23 @@ services:
     build:
       context: ./services/consumer
     environment:
-      MQTT_HOST: broker
-      MQTT_PORT: "1883"
-      MQTT_TOPIC: sandbox/events
-      MQTT_QOS: "1"
+      MQTT_HOST: ${MQTT_HOST:-broker}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      BROADCAST_TOPIC: ${BROADCAST_TOPIC:-sandbox/events}
+      FORWARD_TOPIC: ${FORWARD_TOPIC:-sandbox/processed}
+      MQTT_QOS: ${MQTT_QOS:-1}
+      TRANSFORMER_URL: ${TRANSFORMER_URL:-http://transformer:8000/transform}
+      TRANSFORMER_TIMEOUT: ${TRANSFORMER_TIMEOUT:-5}
     depends_on:
-      - broker
+      broker:
+        condition: service_started
+      transformer:
+        condition: service_started
+    restart: unless-stopped
+
+  transformer:
+    build:
+      context: ./services/transformer
+    ports:
+      - "8000:8000"
     restart: unless-stopped

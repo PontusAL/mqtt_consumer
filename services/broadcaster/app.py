@@ -5,13 +5,16 @@ from datetime import datetime, timezone
 
 import paho.mqtt.client as mqtt
 
-BROKER_HOST = os.getenv("MQTT_HOST", "mqtt-broker")
+BROKER_HOST = os.getenv("MQTT_HOST", "broker")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
-TOPIC = os.getenv("MQTT_TOPIC", "sandbox/events")
-MESSAGE_TEMPLATE = os.getenv(
-    "PUBLISH_MESSAGE", "Hello from publisher"
+TOPIC = os.getenv("BROADCAST_TOPIC", os.getenv("MQTT_TOPIC", "sandbox/events"))
+MESSAGE_TEMPLATE = os.getenv("PUBLISH_MESSAGE", "Hello from broadcaster")
+INTERVAL_SECONDS = float(
+    os.getenv(
+        "BROADCAST_INTERVAL",
+        os.getenv("PUBLISH_INTERVAL", os.getenv("PUBLISH_INTERVAL_SECONDS", "5")),
+    )
 )
-INTERVAL_SECONDS = float(os.getenv("PUBLISH_INTERVAL_SECONDS", "5"))
 QOS = int(os.getenv("MQTT_QOS", "1"))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -25,7 +28,7 @@ def on_connect(client: mqtt.Client, userdata, flags, reason_code, properties=Non
 
 
 def create_client() -> mqtt.Client:
-    client_id = os.getenv("MQTT_CLIENT_ID", "publisher-service")
+    client_id = os.getenv("MQTT_CLIENT_ID", "broadcaster-service")
     client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv5)
     client.on_connect = on_connect
     return client
