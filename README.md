@@ -5,7 +5,7 @@ This repository provides a Docker Compose stack to experiment with MQTT-centric 
 ## Stack overview
 
 - **mqtt-broker** – Eclipse Mosquitto with a permissive development config.
-- **broadcaster** – Python service that spins up three simulated source clients. Each one publishes to its own `BROADCAST_TOPIC_PREFIX/<source_id>` topic, standing in for upstream emitters.
+- **broadcaster** – Python service that spins up three simulated source clients. Each one publishes to its own `BROADCAST_TOPIC_PREFIX/<source_id>` topic (default `sandbox/raw/<uuid>`), standing in for upstream emitters.
 - **consumer** – Python client that subscribes to `BROADCAST_TOPIC`, offloads transformation requests to the HTTP transformer, and republishes the transformed payload to `FORWARD_TOPIC`.
 - **transformer** – Async FastAPI app that exposes `/transform`; currently it simply echoes the payload but serves as a placeholder for data processing logic.
 
@@ -27,11 +27,12 @@ Use `mosquitto_sub` (ships with Mosquitto) to watch topics directly:
 
 ```bash
 # From the host that's running docker compose (localhost maps to the broker port 1883)
-mosquitto_sub -h localhost -p 1883 -t 'sandbox/#' -v
+mosquitto_sub -h localhost -p 1883 -t 'sandbox/raw/#' -v   # raw broadcaster topics
+mosquitto_sub -h localhost -p 1883 -t 'sandbox/processed' -v # consumer output
 ```
 
 - `-h` specifies the broker hostname/IP. Use `localhost` when subscribing from the same machine that exposes the `1883:1883` port mapping, or replace it with another reachable host/IP if you're on a different machine.
-- `-t 'sandbox/#'` subscribes to the entire topic tree the broadcaster uses (`BROADCAST_TOPIC_PREFIX` + client UUID). Adjust the prefix if you change it in `.env`.
+- `-t 'sandbox/raw/#'` subscribes to the entire raw topic tree that the broadcaster uses (`BROADCAST_TOPIC_PREFIX` + client UUID). Adjust the prefix if you change it in `.env`.
 
 ## Next steps
 
