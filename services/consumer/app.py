@@ -9,7 +9,8 @@ import requests
 
 BROKER_HOST = os.getenv("MQTT_HOST", "broker")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
-BROADCAST_TOPIC = os.getenv("BROADCAST_TOPIC", os.getenv("MQTT_TOPIC", "sandbox/events"))
+BROADCAST_TOPIC_PREFIX = os.getenv("BROADCAST_TOPIC_PREFIX", "sandbox")
+BROADCAST_TOPIC_FILTER = os.getenv("BROADCAST_TOPIC_FILTER", f"{BROADCAST_TOPIC_PREFIX}/#")
 FORWARD_TOPIC = os.getenv("FORWARD_TOPIC", "sandbox/processed")
 QOS = int(os.getenv("MQTT_QOS", "1"))
 TRANSFORMER_URL = os.getenv("TRANSFORMER_URL", "http://transformer:8000/transform")
@@ -24,9 +25,9 @@ def on_connect(client: mqtt.Client, userdata, flags, reason_code, properties=Non
             "Connected to %s:%s, subscribing to %s",
             BROKER_HOST,
             BROKER_PORT,
-            BROADCAST_TOPIC,
+            BROADCAST_TOPIC_FILTER,
         )
-        client.subscribe(BROADCAST_TOPIC, qos=QOS)
+        client.subscribe(BROADCAST_TOPIC_FILTER, qos=QOS)
     else:
         logging.error("Connection failed: rc=%s", reason_code)
 

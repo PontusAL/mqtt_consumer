@@ -1,5 +1,5 @@
 services:
-  mqtt-broker:
+  broker:
     image: eclipse-mosquitto:2.0
     container_name: broker
     ports:
@@ -14,7 +14,7 @@ services:
     environment:
       MQTT_HOST: ${MQTT_HOST:-broker}
       MQTT_PORT: ${MQTT_PORT:-1883}
-      BROADCAST_TOPIC: ${BROADCAST_TOPIC:-sandbox/events}
+      BROADCAST_TOPIC_PREFIX: ${BROADCAST_TOPIC_PREFIX:-sandbox}
       BROADCAST_INTERVAL: ${BROADCAST_INTERVAL:-5}
       MQTT_QOS: ${MQTT_QOS:-1}
     depends_on:
@@ -27,7 +27,7 @@ services:
     environment:
       MQTT_HOST: ${MQTT_HOST:-broker}
       MQTT_PORT: ${MQTT_PORT:-1883}
-      BROADCAST_TOPIC: ${BROADCAST_TOPIC:-sandbox/events}
+      BROADCAST_TOPIC_PREFIX: ${BROADCAST_TOPIC_PREFIX:-sandbox}
       FORWARD_TOPIC: ${FORWARD_TOPIC:-sandbox/processed}
       MQTT_QOS: ${MQTT_QOS:-1}
       TRANSFORMER_URL: ${TRANSFORMER_URL:-http://transformer:8000/transform}
