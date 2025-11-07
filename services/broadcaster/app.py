@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -57,9 +58,13 @@ def main():
     try:
         while True:
             for source in sources:
-                payload = (
-                    f"{MESSAGE_TEMPLATE} from {source.source_id} @ "
-                    f"{datetime.now(timezone.utc).isoformat()}"
+                payload = json.dumps(
+                    {
+                        "msg": (
+                            f"{MESSAGE_TEMPLATE} from {source.source_id} @ "
+                            f"{datetime.now(timezone.utc).isoformat()}"
+                        )
+                    }
                 )
                 info = source.client.publish(source.topic, payload=payload, qos=QOS, retain=False)
                 status = info.rc

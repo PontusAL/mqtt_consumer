@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import signal
@@ -33,10 +34,13 @@ def on_connect(client: mqtt.Client, userdata, flags, reason_code, properties=Non
 
 
 def on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage):
-    payload = msg.payload.decode("utf-8")
-    logging.info("Received on %s: %s", msg.topic, payload)
-    transformed = transform_payload(payload)
-    publish_result = client.publish(FORWARD_TOPIC, payload=transformed, qos=QOS, retain=False)
+    payload_text = msg.payload.decode("utf-8")
+    logging.info("Received on %s: %s", msg.topic, payload_text)
+    source_id = extract_source_id(msg.topic)
+    raw_message = extract_message_body(payload_text)
+    transformed_msg = transform_payload(raw_message)
+    outbound_payload = json.dumps({"source_id": source_id, "msg": transformed_msg})
+    publish_result = client.publish(FORWARD_TOPIC, payload=outbound_payload, qos=QOS, retain=False)
     if publish_result.rc == mqtt.MQTT_ERR_SUCCESS:
         logging.info("Forwarded transformed payload to %s", FORWARD_TOPIC)
     else:
@@ -56,6 +60,21 @@ def transform_payload(payload: str) -> str:
     except requests.RequestException:
         logging.exception("Transformer request failed, forwarding original payload")
         return payload
+
+
+def extract_source_id(topic: str) -> str:
+    parts = topic.split("/")
+    return parts[-1] if parts else "unknown"
+
+
+def extract_message_body(payload_text: str) -> str:
+    try:
+        data = json.loads(payload_text)
+        if isinstance(data, dict) and "msg" in data:
+            return str(data["msg"])
+    except json.JSONDecodeError:
+        logging.warning("Payload not JSON, using raw text")
+    return payload_text
 
 
 def create_client() -> mqtt.Client:

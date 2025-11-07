@@ -21,5 +21,6 @@ async def health_check() -> dict[str, str]:
 
 @app.post("/transform", response_model=TransformResponse)
 async def transform(request: TransformRequest) -> TransformResponse:
-    # Placeholder transformation hook; currently echoes the payload.
-    return TransformResponse(payload=request.payload)
+    # Placeholder transformation hook; prefixes payload to simulate processing.
+    message = f"PROCESSED: {request.payload}"
+    return TransformResponse(payload=message)

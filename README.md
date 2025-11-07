@@ -5,8 +5,8 @@ This repository provides a Docker Compose stack to experiment with MQTT-centric 
 ## Stack overview
 
 - **mqtt-broker** – Eclipse Mosquitto with a permissive development config.
-- **broadcaster** – Python service that spins up three simulated source clients. Each one publishes to its own `BROADCAST_TOPIC_PREFIX/<source_id>` topic (default `sandbox/raw/<uuid>`), standing in for upstream emitters.
-- **consumer** – Python client that subscribes to `BROADCAST_TOPIC`, offloads transformation requests to the HTTP transformer, and republishes the transformed payload to `FORWARD_TOPIC`.
+- **broadcaster** – Python service that spins up three simulated source clients. Each one publishes JSON objects shaped as `{ "msg": "..." }` to its own `BROADCAST_TOPIC_PREFIX/<source_id>` topic (default `sandbox/raw/<uuid>`), standing in for upstream emitters.
+- **consumer** – Python client that subscribes to `BROADCAST_TOPIC_PREFIX/#`, offloads each inbound `msg` to the HTTP transformer, and republishes a JSON object `{ "source_id": "...", "msg": "..." }` to `FORWARD_TOPIC`.
 - **transformer** – Async FastAPI app that exposes `/transform`; currently it simply echoes the payload but serves as a placeholder for data processing logic.
 
 ## Usage
@@ -15,8 +15,8 @@ This repository provides a Docker Compose stack to experiment with MQTT-centric 
 docker compose up --build
 ```
 
-- The broadcaster emits payloads every `BROADCAST_INTERVAL` seconds (default 5) from three UUID-tagged clients.
-- The consumer logs the incoming payload, calls the transformer via HTTP, and republishes the response on `FORWARD_TOPIC`.
+- The broadcaster emits JSON payloads every `BROADCAST_INTERVAL` seconds (default 5) from three UUID-tagged clients.
+- The consumer logs the incoming payload, calls the transformer via HTTP with the `msg` field, and republishes the response on `FORWARD_TOPIC` as `{source_id, msg}`.
 - Inspect consumer logs to see both inbound and outbound traffic, and query `http://localhost:8000/health` to confirm the transformer is running.
 
 Tune MQTT host/port, topic prefix, QoS, transformer endpoint, or broadcast interval via the `.env` file (Compose automatically loads it) or by exporting environment variables before running Compose.
